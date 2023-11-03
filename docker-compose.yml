@@ -19,8 +19,8 @@ services:
     volumes:
       - pg-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: kasekage
+      POSTGRES_USER: <your-db-username>
+      POSTGRES_PASSWORD: <your-db-password>
       POSTGRES_DB: postgres
 
 volumes:
