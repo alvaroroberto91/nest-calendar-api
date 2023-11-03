@@ -1,73 +1,145 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
+  <img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" />
 </p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
 ## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Installation
-
-```bash
-$ npm install
-```
+Basic event registration API using Nest.Js, Postgres, and Docker.
 
 ## Running the app
+The application can be run in a Docker environment. To do this, make sure you have Docker and Docker Compose installed and configured on your machine.
+After that, follow the steps below:
+
+Edit the 'typeorm.config.ts' file on 'src/configs/' and add your db username and password:
+
+```js
+export const typeOrmConfig: TypeOrmModuleOptions = {
+    "type": "postgres",
+    "host": "pgsql",
+    "port": 5432,
+    "username": "your-db-username",
+    "password": "your-db-password",
+    "database": "postgres",
+    "synchronize": true,
+    "entities": ["dist/**/*.entity{.ts,.js}"]
+};
+```
+Edit the 'docker-compose.yml' file and add your db username and password:
+
+```yml
+version: '3'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - '3000:3000'
+    container_name: nest-calendar-api
+    restart: always
+
+  pgsql:
+    image: postgres:alpine
+    ports:
+      - '5432:5432'
+    container_name: 'pgsql'
+    restart: always
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: "your-db-username"
+      POSTGRES_PASSWORD: "your-db-password"
+      POSTGRES_DB: postgres
+
+volumes:
+  pg-data:
+```
+After that, run the following command in the project root:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+docker-compose up -d
 ```
+The Docker Compose will configure and start a container for Postgres and the Api
 
-## Test
-
+## Using the api
+With the docker container running, you can make requests to baseURL:
 ```bash
-# unit tests
-$ npm run test
+http://localhost:3000/event
+```
+Below are the routes available in the application and examples of how to make requests
 
-# e2e tests
-$ npm run test:e2e
+```sh
+POST /create-event (Create a new event)
+Body of Request:
+{
+    "event_title": "test",
+    "event_date": "2022-02-25",
+    "start_event_hour": "08:00:00",
+    "end_event_hour": "09:00:00"
+}
 
-# test coverage
-$ npm run test:cov
+Response Example:
+{
+    "event_title": "test",
+    "event_date": "2022-02-25",
+    "start_event_hour": "08:00:00",
+    "end_event_hour": "09:00:00"
+    "id": 1
+}
 ```
 
-## Support
+```sh
+GET /list-all (List all registered events)
+Response Example:
+[
+    {
+        "id": 2,
+        "event_title": "test",
+        "event_date": "2022-02-25",
+        "start_event_hour": "21:49:59",
+        "end_event_hour": "23:59:59"
+    }
+]
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```sh
+GET /list-event/:id (List an event by id)
+Response Example:
+{
+    "id": 4,
+    "event_title": "test",
+    "event_date": "2022-02-25",
+    "start_event_hour": "08:00:00",
+    "end_event_hour": "09:00:00"
+}
+```
 
-## Stay in touch
+```sh
+PUT /update-event/:id (Update an event by id)
+Body of Request:
+{
+    "event_title": "test",
+    "event_date": "2022-02-26",
+    "start_event_hour": "08:00:00",
+    "end_event_hour": "09:00:00"
+}
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Response Example:
+{
+    "id": 4,
+    "event_title": "test",
+    "event_date": "2022-02-26",
+    "start_event_hour": "08:00:00",
+    "end_event_hour": "09:00:00"
+}
+```
 
-## License
+```sh
+DELETE /delete-event/:id (Delete an event by id)
+Response Example:
+{
+    "message": "Event deleted successfully!"
+}
+```
 
-Nest is [MIT licensed](LICENSE).
+
